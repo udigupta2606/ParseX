@@ -12,6 +12,9 @@ import javafx.scene.text.Font;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.ResourceBundle;
 
 public class OutputController implements Initializable {
@@ -24,7 +27,7 @@ public class OutputController implements Initializable {
 
     @FXML
     private TextArea output;
-
+    
     @FXML
     private void handleGrammar(ActionEvent event){
         if(GrammarInputController.parserKind.equals("LR(0)") || GrammarInputController.parserKind.equals("SLR(1)")){
@@ -95,9 +98,47 @@ public class OutputController implements Initializable {
         }
     }
 
+    @FXML
+    private void handleMergedTable(ActionEvent event) {
+        if (GrammarInputController.parserKind.equals("LR(0)") || GrammarInputController.parserKind.equals("SLR(1)")) {
+            output.setText(GrammarInputController.lr0Parser.mergedTableStr());
+        } else {
+            output.setText(GrammarInputController.lr1Parser.mergedTableStr());
+        }
+    }
+
+    @FXML
+    private void handleStackImplementation(ActionEvent event) {
+        String rawInput = input.getText().trim();
+        if (rawInput.isEmpty()) {
+            output.setText("Input string is empty!");
+            return;
+        }
+
+        List<String> inputString = new ArrayList<>(Arrays.asList(rawInput.split("\\s+")));
+        String resultStr = "";
+        inputString.add("$");
+
+        if (GrammarInputController.parserKind.equals("LR(0)") || GrammarInputController.parserKind.equals("SLR(1)")) {
+            HashMap<Integer, HashMap<String, String>> combinedTable = GrammarInputController.lr0Parser.getCombinedTable();
+            List<String[]> productionList = GrammarInputController.lr0Parser.getProductionList();
+
+            resultStr = GrammarInputController.lr0Parser.parseInputString(inputString, combinedTable, productionList);
+
+        } else {
+            HashMap<Integer, HashMap<String, String>> combinedTable = GrammarInputController.lr1Parser.getCombinedTable();
+            List<String[]> productionList = GrammarInputController.lr1Parser.getProductionList();
+
+            resultStr = GrammarInputController.lr1Parser.parseInputString(inputString, combinedTable, productionList);
+        }
+
+        output.setText(resultStr);
+    }
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         result.setVisible(false);
+        output.setStyle("-fx-font-family: monospace");
         input.textProperty().addListener((observable, oldValue, newValue) -> {
             String str = input.getText();
             ArrayList<String> words = new ArrayList<>();
@@ -108,22 +149,22 @@ public class OutputController implements Initializable {
             if(GrammarInputController.parserKind.equals("LR(0)") || GrammarInputController.parserKind.equals("SLR(1)")){
                 boolean accept = GrammarInputController.lr0Parser.accept(words);
                 if(accept){
-                    result.setText("accepted");
+                    result.setText("Accepted");
                     result.setTextFill(Color.GREEN);
                     result.setVisible(true);
                 }else {
-                    result.setText("not accepted");
+                    result.setText("Rejected");
                     result.setTextFill(Color.RED);
                     result.setVisible(true);
                 }
             }else{
                 boolean accept = GrammarInputController.lr1Parser.accept(words);
                 if(accept){
-                    result.setText("accepted");
+                    result.setText("Accepted");
                     result.setTextFill(Color.GREEN);
                     result.setVisible(true);
                 }else {
-                    result.setText("not accepted");
+                    result.setText("Rejected");
                     result.setTextFill(Color.RED);
                     result.setVisible(true);
                 }
