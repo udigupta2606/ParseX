@@ -67,12 +67,14 @@ public class LR1Parser extends LRParser {
 
     }
 
+    //CLR1 Parser
     public boolean parseCLR1() {
         createStatesForCLR1();
         createGoToTable();
         return createActionTable();
     }
 
+    //LALR Parser
     public boolean parseLALR1() {
         createStatesForLALR1();
         createGoToTable();
