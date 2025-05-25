@@ -19,7 +19,9 @@ import util.Grammar;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 public class GrammarInputController implements Initializable{
 
@@ -50,6 +52,13 @@ public class GrammarInputController implements Initializable{
             parserKind = (String)parser.getValue();
             boolean canBeParse = true;
             String grammarText = input.getText();
+
+            if (!isValidGrammar(grammarText)) {
+                error.setText("Invalid Grammar!");
+                error.setVisible(true);
+                return;
+            }
+
             Grammar grammar = new Grammar(grammarText);
             if(parser.getValue().equals("LR(0)") || parser.getValue().equals("SLR(1)")){
                 lr0Parser = new LR0Parser(grammar);
@@ -67,7 +76,7 @@ public class GrammarInputController implements Initializable{
                 }
             }
             if(!canBeParse){
-                error.setText("The grammar can not be parsed. choose a different parser or grammar");
+                error.setText("The grammar can not be parsed. Choose a different parser or grammar");
                 error.setVisible(true);
             }else{
                 Button button = (Button)event.getSource();
@@ -97,6 +106,45 @@ public class GrammarInputController implements Initializable{
             String selected = (String) parser.getValue();
             selectedParserLabel.setText("Selected: " + selected);
         });
+    }
+
+    private static boolean isValidGrammar(String grammarStr) {
+        Set<String> definedNonTerminals = new HashSet<>();
+        Set<String> usedNonTerminals = new HashSet<>();
+
+        String[] lines = grammarStr.split("\\n");
+        for (String line : lines) {
+            line = line.trim();
+            if (line.isEmpty()) continue;
+
+            String[] parts = line.split("->");
+            if (parts.length != 2) {
+                return false; 
+            }
+
+            String lhs = parts[0].trim();
+            String rhs = parts[1].trim();
+
+            definedNonTerminals.add(lhs);
+
+            String[] productions = rhs.split("\\|");
+            for (String production : productions) {
+                for (String symbol : production.trim().split("\\s+")) {
+                    symbol = symbol.trim();
+                    if (!symbol.isEmpty() && Character.isUpperCase(symbol.charAt(0))) {
+                        usedNonTerminals.add(symbol);
+                    }
+                }
+            }
+        }
+
+        for (String nonTerminal : usedNonTerminals) {
+            if (!definedNonTerminals.contains(nonTerminal)) {
+                return false; 
+            }
+        }
+
+        return true;
     }
 
 }
