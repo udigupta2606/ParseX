@@ -68,6 +68,7 @@ Launch the application via gui.Main
 ## Sample Usage
 Enter grammar rules in the GUI (e.g., S → E, E → E + T | T, T → i | ( E ))
 Select the parser type (LR(0), SLR(1), etc.)
+
 View:
 FIRST and FOLLOW sets
 Canonical item sets
