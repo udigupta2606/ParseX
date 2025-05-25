@@ -1,16 +1,16 @@
-package lr0;
+apackage lr0;
 
-import util.*;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.Stack;
+import java.util.TreeSet;
+
+import util.*;
 
 public class LR0Parser extends LRParser {
 
@@ -210,4 +210,189 @@ public class LR0Parser extends LRParser {
         }
     }
 
+    public HashMap<Integer, HashMap<String, String>> getCombinedTable() {
+        HashMap<Integer, HashMap<String, String>> combined = new HashMap<>();
+
+        // Merge Action Table
+        for (int i = 0; i < actionTable.length; i++) {
+            HashMap<String, String> row = new HashMap<>();
+            for (String terminal : actionTable[i].keySet()) {
+                Action action = actionTable[i].get(terminal);
+                String entry = "";
+
+                switch (action.getType()) {
+                    case SHIFT:
+                        entry = "s" + action.getOperand();
+                        break;
+                    case REDUCE:
+                        entry = "r" + action.getOperand();
+                        break;
+                    case ACCEPT:
+                        entry = "acc";
+                        break;
+                    default:
+                        entry = "err"; // optional for errors
+                }
+
+                row.put(terminal, entry);
+            }
+            combined.put(i, row);
+        }
+
+        // Merge GoTo Table
+        for (int i = 0; i < goToTable.length; i++) {
+            combined.putIfAbsent(i, new HashMap<>());
+            for (String nonTerminal : goToTable[i].keySet()) {
+                int nextState = goToTable[i].get(nonTerminal);
+                combined.get(i).put(nonTerminal, String.valueOf(nextState));
+            }
+        }
+
+        return combined;
+    }
+
+    public String mergedTableStr() {
+        StringBuilder sb = new StringBuilder();
+        HashMap<Integer, HashMap<String, String>> combined = getCombinedTable();
+
+        // Step 1: Collect all unique symbols (sorted)
+        Set<String> symbolSet = new TreeSet<>();
+        for (HashMap<String, String> row : combined.values()) {
+            symbolSet.addAll(row.keySet());
+        }
+
+        List<String> symbols = new ArrayList<>(symbolSet);
+        symbols.remove("$");
+        symbols.add("$");
+
+        int colWidth = 12;
+
+        // Header
+        sb.append("Merged Action + GoTo Table:\n\n");
+        sb.append(String.format("%-6s", "State"));
+        for (String sym : symbols) {
+            sb.append(String.format("|%-" + colWidth + "s", sym));
+        }
+        sb.append("\n");
+
+        // Horizontal separator
+        int totalCols = 1 + symbols.size();
+        int totalWidth = 6 + totalCols * (colWidth + 1);
+        sb.append("-".repeat(totalWidth)).append("\n");
+
+        // Table rows
+        List<Integer> sortedStates = new ArrayList<>(combined.keySet());
+        Collections.sort(sortedStates);
+
+        for (Integer state : sortedStates) {
+            sb.append(String.format("%-6d", state));
+            HashMap<String, String> row = combined.get(state);
+            for (String sym : symbols) {
+                String val = row.getOrDefault(sym, "");
+                if (val.startsWith("s")) {
+                    val = "SHIFT " + val.substring(1);
+                } else if (val.startsWith("r")) {
+                    val = "REDUCE " + val.substring(1);
+                } else if (val.equalsIgnoreCase("acc")) {
+                    val = "ACCEPT";
+                }
+                sb.append(String.format("|%-" + colWidth + "s", val));
+            }
+            sb.append("\n");
+            sb.append("-".repeat(totalWidth)).append("\n");
+        }
+
+        return sb.toString();
+    }
+
+
+    public List<String[]> getProductionList() {
+        List<String[]> prodList = new ArrayList<>();
+
+        for (Rule rule : grammar.getRules()) {
+            String[] rhs = rule.getRightSide();
+            String[] fullProd = new String[2 + rhs.length];
+
+            fullProd[0] = rule.getLeftSide();
+            fullProd[1] = "->";
+            for (int i = 0; i < rhs.length; i++) {
+                fullProd[2 + i] = rhs[i];
+            }
+
+            prodList.add(fullProd);
+        }
+
+        return prodList;
+    }
+
+    private String formatAction(String action, List<String[]> productionList) {
+        if (action.startsWith("s")) {
+            return "shift " + action.substring(1);
+        } else if (action.startsWith("r")) {
+            int ruleIndex = Integer.parseInt(action.substring(1));
+            String[] prod = productionList.get(ruleIndex);
+            return "reduce " + prod[0] + "->" + String.join(" ", Arrays.copyOfRange(prod, 2, prod.length));
+        } else if (action.equals("acc") || action.startsWith("a")) {
+            return "accept";
+        }
+        return action;
+    }
+
+    public String parseInputString(List<String> input, HashMap<Integer, HashMap<String, String>> table, List<String[]> productionList) {
+        Stack<String> stack = new Stack<>();
+        stack.push("0");
+
+        StringBuilder trace = new StringBuilder();
+        trace.append(String.format("%-30s %-30s %-10s\n", "STACK", "INPUT", "ACTION"));
+        trace.append("\n");
+
+        while (!input.isEmpty()) {
+            int state = Integer.parseInt(stack.peek());
+            String symbol = input.get(0);
+
+            String action = table.get(state).get(symbol);
+            if (action == null) {
+                trace.append("ERROR: No action found for state ").append(state).append(" and symbol ").append(symbol).append("\n");
+                break;
+            }
+
+            // Append current STACK, INPUT, and ACTION to trace
+            trace.append(String.format("%-30s %-30s %-10s\n",
+                    String.join(" ", stack),
+                    String.join(" ", input),
+                    formatAction(action, productionList)
+            ));
+
+            if (action.startsWith("s")) {
+                // Shift operation
+                stack.push(symbol);
+                stack.push(action.substring(1));
+                input.remove(0);
+
+            } else if (action.startsWith("r")) {
+                // Reduce operation
+                int ruleIndex = Integer.parseInt(action.substring(1));
+                String[] production = productionList.get(ruleIndex);
+                int symbolsToPop = (production.length - 2) * 2;
+
+                for (int i = 0; i < symbolsToPop; i++) {
+                    stack.pop();
+                }
+
+                String topState = stack.peek();
+                String lhs = production[0];
+                String gotoState = table.get(Integer.parseInt(topState)).get(lhs);
+
+                stack.push(lhs);
+                stack.push(gotoState);
+
+            } else if (action.equals("acc") || action.startsWith("a")) {
+                trace.append("\nAccepted\n");
+                return trace.toString(); // return full trace to be printed in GUI
+            }
+        }
+
+        trace.append("\nRejected\n");
+        return trace.toString();
+    }
 }
