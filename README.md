@@ -62,49 +62,74 @@ javac --module-path "C:\javafx-sdk-17.0.15\lib" --add-modules javafx.controls,ja
 
 This command will:
 Compile all .java files into out/
+
 Copy .fxml files into out/gui/
+
 Launch the application via gui.Main
 
 ## Sample Usage
 Enter grammar rules in the GUI (e.g., S → E, E → E + T | T, T → i | ( E ))
+
 Select the parser type (LR(0), SLR(1), etc.)
 
 View:
+
 FIRST and FOLLOW sets
+
 Canonical item sets
+
 ACTION and GOTO tables
+
 Simulate parsing with an input string (e.g., i + i), and follow the step-by-step actions (shift, reduce, accept)
 
 ## Development Team
 Team Name: CodeCore
+
 Team ID: CD-VI-T039
 
 Gurpreet Singh - Grammar utilities, FIRST/FOLLOW logic - gurpreetsinghsappal17@gmail.com
+
 Udi Gupta - Parser engine (LR, SLR, CLR, LALR), logic, stack based visualization - udigupta2606@gmail.com
+
 Suhawni Arora - JavaFX GUI, UI simulation, testing - arorasuhawni2302@gmail.com
 
 ## Learning Goals
 This project helps students and professionals:
+
 Understand the core mechanics of bottom-up LR parsing
+
 Explore conflict detection and resolution strategies
+
 Visualize parsing table generation
+
 Experiment with ambiguous and recursive grammars
+
 See how compilers perform syntax analysis
 
 ## Challenges Faced
 Handling grammar ambiguity and conflict detection
+
 Managing lookahead propagation in CLR(1) and LALR(1)
+
 Designing smooth UI integration with backend logic
+
 Simulating accurate parser stack transitions in all parser types
+
 Merging independently developed modules via version control
 
 ## Future Enhancements
 Add Generalized LR (GLR) parsing for ambiguous grammars
+
 Implement semantic analysis and symbol tables
+
 Export parsing tables and trace logs as PDF/CSV
+
 Add animated parsing steps for better UX
+
 Provide preloaded example grammars for beginners
+
 Build a REST API for integration into web-based IDEs
+
 Add grammar error suggestions and validations
 
 ## Academic Context
