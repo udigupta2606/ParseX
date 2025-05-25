@@ -1,29 +1,86 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.text.*?>
-<?import javafx.scene.shape.*?>
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.shape.Line?>
 
-<AnchorPane onDragDetected="#handleGrammar" prefHeight="534.0" prefWidth="702.0" style="-fx-background-color: &quot;ffffff&quot;;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.OutputController">
-   <children>
-      <Label layoutX="70.0" layoutY="38.0" text="enter your input below (with space) :" />
-      <TextField fx:id="input" layoutX="71.0" layoutY="76.0" prefHeight="25.0" prefWidth="517.0" />
-      <Label fx:id="result" layoutX="605.0" layoutY="81.0" text="result" />
-      <Line endX="600.0" layoutX="101.0" layoutY="134.0" startX="-100.0" />
-      <Line endX="300.0" layoutX="91.0" layoutY="334.0" rotate="90.0" startX="-100.0" />
-      <TextArea fx:id="output" editable="false" layoutX="193.0" layoutY="137.0" prefHeight="395.0" prefWidth="506.0">
-         <font>
-            <Font name="Monospaced Regular" size="13.0" />
-         </font></TextArea>
-      <Button layoutX="14.0" layoutY="173.0" mnemonicParsing="false" onAction="#handleGrammar" style="-fx-background-color: &quot;ffffff&quot;;" text="Augmented Grammar" />
-      <Button layoutX="56.0" layoutY="229.0" mnemonicParsing="false" onAction="#handleFirst" style="-fx-background-color: &quot;ffffff&quot;;" text="First Sets" />
-      <Button layoutX="48.0" layoutY="283.0" mnemonicParsing="false" onAction="#handleFollow" style="-fx-background-color: &quot;ffffff&quot;;" text="Follow Sets" />
-      <Button layoutX="20.0" layoutY="335.0" mnemonicParsing="false" onAction="#handleState" style="-fx-background-color: &quot;ffffff&quot;;" text="Canonical Collection" />
-      <Button layoutX="48.0" layoutY="390.0" mnemonicParsing="false" onAction="#handleGoTo" style="-fx-background-color: &quot;ffffff&quot;;" text="Go To Table" />
-      <Button layoutX="47.0" layoutY="441.0" mnemonicParsing="false" onAction="#handleAction" style="-fx-background-color: &quot;ffffff&quot;;" text="Action Table" />
-   </children>
+<AnchorPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="gui.OutputController"
+            prefWidth="900.0" prefHeight="650.0"
+            style="-fx-background-color: #121212;">
+
+    <!-- Left VBox for buttons -->
+    <VBox fx:id="buttonsBox" spacing="40.0" 
+         alignment="CENTER"
+          style="-fx-background-color: #1f1f1f; -fx-padding: 20; -fx-background-radius: 10; 
+                 -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.7), 12, 0, 0, 3);"
+          prefWidth="200.0" prefHeight="610.0"
+          AnchorPane.leftAnchor="20" AnchorPane.topAnchor="20" AnchorPane.bottomAnchor="20">
+
+        <Button mnemonicParsing="false" onAction="#handleGrammar" text="Augmented Grammar"
+               prefWidth="160" alignment="CENTER"
+                style="-fx-background-color: #388e3c; -fx-text-fill: white; -fx-font-size: 14; 
+                       -fx-background-radius: 6; -fx-cursor: hand;" />
+        <Button mnemonicParsing="false" onAction="#handleFirst" text="First Sets"
+               prefWidth="160" alignment="CENTER"
+                style="-fx-background-color: #388e3c; -fx-text-fill: white; -fx-font-size: 14; 
+                       -fx-background-radius: 6; -fx-cursor: hand;" />
+        <Button mnemonicParsing="false" onAction="#handleFollow" text="Follow Sets"
+                prefWidth="160" alignment="CENTER"
+                style="-fx-background-color: #388e3c; -fx-text-fill: white; -fx-font-size: 14; 
+                       -fx-background-radius: 6; -fx-cursor: hand;" />
+        <Button mnemonicParsing="false" onAction="#handleState" text="Canonical Collection"
+                prefWidth="160" alignment="CENTER"
+                style="-fx-background-color: #388e3c; -fx-text-fill: white; -fx-font-size: 14; 
+                       -fx-background-radius: 6; -fx-cursor: hand;" />
+        <Button mnemonicParsing="false" onAction="#handleGoTo" text="Go To Table"
+                prefWidth="160" alignment="CENTER"
+                style="-fx-background-color: #388e3c; -fx-text-fill: white; -fx-font-size: 14; 
+                       -fx-background-radius: 6; -fx-cursor: hand;" />
+        <Button mnemonicParsing="false" onAction="#handleAction" text="Action Table"
+                prefWidth="160" alignment="CENTER"
+                style="-fx-background-color: #388e3c; -fx-text-fill: white; -fx-font-size: 14; 
+                       -fx-background-radius: 6; -fx-cursor: hand;" />
+        <Button mnemonicParsing="false" onAction="#handleMergedTable" text="Go To + Action Table"
+                prefWidth="160" alignment="CENTER"
+                style="-fx-background-color: #388e3c; -fx-text-fill: white; -fx-font-size: 14; 
+                       -fx-background-radius: 6; -fx-cursor: hand;" />
+        <Button mnemonicParsing="false" onAction="#handleStackImplementation" text="Stack Implementation"
+                prefWidth="160" alignment="CENTER"
+                style="-fx-background-color: #388e3c; -fx-text-fill: white; -fx-font-size: 14; 
+                       -fx-background-radius: 6; -fx-cursor: hand;" />
+    </VBox>
+
+    <!-- Right VBox for input and output -->
+    <VBox spacing="25.0" 
+          style="-fx-background-color: #1f1f1f; -fx-padding: 25; -fx-background-radius: 10; 
+                 -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.7), 12, 0, 0, 3);"
+          AnchorPane.leftAnchor="240" AnchorPane.rightAnchor="20" AnchorPane.topAnchor="20" AnchorPane.bottomAnchor="20">
+
+        <!-- Input Section -->
+        <HBox spacing="15.0" alignment="CENTER_LEFT">
+            <Label text="Enter input string:" textFill="#bbbbbb"
+                   style="-fx-font-family: 'Segoe UI'; -fx-font-size: 14;" />
+            <TextField fx:id="input" prefWidth="350.0"
+                       style="-fx-background-color: #333333; -fx-text-fill: white; -fx-background-radius: 6; -fx-border-radius: 6; -fx-border-color: #555555;" />
+            <Label fx:id="result" text="Result" textFill="#388e3c" 
+                   style="-fx-font-family: 'Segoe UI'; -fx-font-size: 14; -fx-padding: 0 0 0 15;" />
+        </HBox>
+
+        <Line startX="0" endX="620" stroke="#555555" />
+
+        <!-- Output TextArea -->
+        <TextArea fx:id="output" editable="false" wrapText="false"
+                  prefHeight="470.0" prefWidth="620.0"
+                  style="-fx-control-inner-background: #222222; 
+                         -fx-font-family: 'Consolas'; 
+                         -fx-font-size: 50px; 
+                         -fx-text-fill: white; 
+                         -fx-border-color: #555555; 
+                         -fx-border-radius: 6; 
+                         -fx-background-radius: 6;" />
+    </VBox>
+
 </AnchorPane>
