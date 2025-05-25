@@ -4,8 +4,14 @@ import lr0.LR0Item;
 import util.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.Stack;
+import java.util.TreeSet;
 
 public class LR1Parser extends LRParser {
 
@@ -209,5 +215,242 @@ public class LR1Parser extends LRParser {
             System.out.println();
         }
     }
+
+    //Stack implementation starts
+    public HashMap<Integer, HashMap<String, String>> getCombinedTable() {
+        HashMap<Integer, HashMap<String, String>> combined = new HashMap<>();
+
+        // Merge Action Table
+        for (int i = 0; i < actionTable.length; i++) {
+            HashMap<String, String> row = new HashMap<>();
+            for (String terminal : actionTable[i].keySet()) {
+                Action action = actionTable[i].get(terminal);
+                String entry = "";
+
+                switch (action.getType()) {
+                    case SHIFT:
+                        entry = "s" + action.getOperand();
+                        break;
+                    case REDUCE:
+                        entry = "r" + action.getOperand();
+                        break;
+                    case ACCEPT:
+                        entry = "acc"; // or "a" if your parser uses "a"
+                        break;
+                    default:
+                        entry = "err"; // optional, for error handling
+                }
+
+                row.put(terminal, entry);
+            }
+            combined.put(i, row);
+        }
+
+        // Merge GOTO Table
+        for (int i = 0; i < goToTable.length; i++) {
+            combined.putIfAbsent(i, new HashMap<>());
+            for (String nonTerminal : goToTable[i].keySet()) {
+                int nextState = goToTable[i].get(nonTerminal);
+                combined.get(i).put(nonTerminal, String.valueOf(nextState));
+            }
+        }
+
+        return combined;
+    }
+
+    public String mergedTableStr() {
+        StringBuilder sb = new StringBuilder();
+        HashMap<Integer, HashMap<String, String>> combined = getCombinedTable();
+
+        // Step 1: Collect and sort symbols (ensure $ is last)
+        Set<String> allSymbols = new TreeSet<>();
+        for (HashMap<String, String> row : combined.values()) {
+            allSymbols.addAll(row.keySet());
+        }
+
+        List<String> symbols = new ArrayList<>(allSymbols);
+        symbols.remove("$");
+        symbols.add("$");
+
+        int colWidth = 12; // enough space for REDUCE 10, etc.
+
+        // Step 2: Header
+        sb.append(String.format("|%-6s|", "State"));
+        for (String sym : symbols) {
+            sb.append(String.format(" %-" + (colWidth - 1) + "s|", sym));
+        }
+        sb.append("\n");
+
+        // Step 3: Header separator (no '|')
+        int totalCols = 1 + symbols.size();
+        for (int i = 0; i < totalCols; i++) {
+            sb.append("-".repeat(colWidth));
+        }
+        sb.append("\n");
+
+        // Step 4: Print each row
+        List<Integer> sortedStates = new ArrayList<>(combined.keySet());
+        Collections.sort(sortedStates);
+
+        for (Integer state : sortedStates) {
+            sb.append(String.format("|%-6d|", state));
+            HashMap<String, String> row = combined.get(state);
+
+            for (String sym : symbols) {
+                String val = row.getOrDefault(sym, "");
+
+                // Format actions
+                if (val.startsWith("s")) {
+                    val = "SHIFT " + val.substring(1);
+                } else if (val.startsWith("r")) {
+                    val = "REDUCE " + val.substring(1);
+                } else if (val.equalsIgnoreCase("acc")) {
+                    val = "ACCEPT";
+                }
+
+                sb.append(String.format(" %-" + (colWidth - 1) + "s|", val));
+            }
+            sb.append("\n");
+
+            // Row separator (no '|')
+            for (int i = 0; i < totalCols; i++) {
+                sb.append("-".repeat(colWidth));
+            }
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
+
+
+
+
+    public List<String[]> getProductionList() {
+        List<String[]> prodList = new ArrayList<>();
+
+        for (Rule rule : grammar.getRules()) {
+            String[] rhs = rule.getRightSide(); //fixed
+            String[] fullProd = new String[2 + rhs.length];
+
+            fullProd[0] = rule.getLeftSide();
+            fullProd[1] = "->";
+            for (int i = 0; i < rhs.length; i++) {
+                fullProd[2 + i] = rhs[i];
+            }
+
+            prodList.add(fullProd);
+        }
+
+        return prodList;
+    }
+
+    private String formatAction(String action, List<String[]> productionList) {
+        if (action.startsWith("s")) {
+            return "shift " + action.substring(1);
+        } else if (action.startsWith("r")) {
+            int ruleIndex = Integer.parseInt(action.substring(1));
+            String[] prod = productionList.get(ruleIndex);
+            return "reduce " + prod[0] + "->" + String.join(" ", Arrays.copyOfRange(prod, 2, prod.length));
+        } else if (action.equals("acc") || action.startsWith("a")) {
+            return "accept";
+        }
+        return action;
+    }
+
+
+
+    public String parseInputString(List<String> input, HashMap<Integer, HashMap<String, String>> table, List<String[]> productionList) {
+        Stack<String> stack = new Stack<>();
+        stack.push("0");
+
+        StringBuilder log = new StringBuilder();
+        log.append(String.format("%-30s %-30s %-10s\n", "STACK", "INPUT", "ACTION"));
+        log.append("\n");
+
+        int maxSteps = 1000;
+        int steps = 0;
+
+        while (!input.isEmpty() && steps++ < maxSteps) {
+            int state;
+            try {
+                state = Integer.parseInt(stack.peek());
+            } catch (NumberFormatException e) {
+                log.append("ERROR: Stack top is not a valid state: ").append(stack.peek()).append("\n");
+                return log.toString() + "\nRejected";
+            }
+
+            String symbol = input.get(0);
+            HashMap<String, String> actionRow = table.get(state);
+            if (actionRow == null) {
+                log.append("ERROR: No action row for state ").append(state).append("\n");
+                return log.toString() + "\nRejected";
+            }
+
+            String action = actionRow.get(symbol);
+            if (action == null) {
+                log.append("ERROR: No action found for state ").append(state).append(" and symbol '").append(symbol).append("'\n");
+                return log.toString() + "\nRejected";
+            }
+
+            // Log current step
+            log.append(String.format("%-30s %-30s %-10s\n",
+                String.join(" ", stack),
+                String.join(" ", input),
+                formatAction(action, productionList)
+            ));
+
+            if (action.startsWith("s")) {
+                // Shift
+                stack.push(symbol);
+                stack.push(action.substring(1));
+                input.remove(0);
+
+            } else if (action.startsWith("r")) {
+                // Reduce
+                int ruleIndex = Integer.parseInt(action.substring(1));
+                String[] production = productionList.get(ruleIndex);
+                int symbolsToPop = (production.length - 2) * 2;
+
+                for (int i = 0; i < symbolsToPop; i++) {
+                    if (!stack.isEmpty()) stack.pop();
+                    else {
+                        log.append("ERROR: Tried to pop from empty stack during reduce\n");
+                        return log.toString() + "\nRejected";
+                    }
+                }
+
+                String topStateStr = stack.peek();
+                int topState = Integer.parseInt(topStateStr);
+                String lhs = production[0];
+
+                String gotoState = table.get(topState).get(lhs);
+                if (gotoState == null) {
+                    log.append("ERROR: No GOTO state for non-terminal '").append(lhs).append("' from state ").append(topState).append("\n");
+                    return log.toString() + "\nRejected";
+                }
+
+                stack.push(lhs);
+                stack.push(gotoState);
+
+            } else if (action.equals("acc") || action.startsWith("a")) {
+                log.append("\nAccepted\n");
+                return log.toString();
+            } else {
+                log.append("ERROR: Unknown action '").append(action).append("'\n");
+                return log.toString() + "\nRejected";
+            }
+        }
+
+        if (steps >= maxSteps) {
+            log.append("ERROR: Too many steps. Infinite loop suspected.\n");
+        }
+
+        return log.toString() + "\nRejected";
+    }
+
+
+    // private void printStackAndInput(Stack<String> stack, List<String> input) {
+    //     System.out.println(String.join(" ", stack) + "\t\t\t\t\t" + String.join(" ", input));
+    // }
 
 }
