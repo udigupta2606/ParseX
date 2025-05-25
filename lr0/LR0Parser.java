@@ -1,4 +1,4 @@
-apackage lr0;
+package lr0;
 
 import java.util.ArrayList;
 import java.util.Arrays;
