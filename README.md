@@ -34,9 +34,13 @@ ParseX is an interactive **Java-based LR parser simulator** that supports the fu
 
 ParseX/
 ├── gui/ # JavaFX GUI and controllers
+
 ├── lr0/ # LR(0) and SLR(1) parsing logic
+
 ├── lr1/ # CLR(1) and LALR(1) parsing logic
+
 ├── util/ # Grammar parsing, FIRST/FOLLOW, data models
+
 ├── out/ # Output directory after compilation
 
 ---
