@@ -27,6 +27,10 @@ public class GrammarInputController implements Initializable{
     private Label error;
 
     @FXML
+    private Label selectedParserLabel;
+
+
+    @FXML
     private TextArea input;
 
     @FXML
@@ -78,14 +82,21 @@ public class GrammarInputController implements Initializable{
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+
         error.setVisible(false);
-        ObservableList<String> options =
-                FXCollections.observableArrayList(
-                        "LR(0)",
-                        "SLR(1)",
-                        "CLR(1)",
-                        "LALR(1)"
-                );
+
+        ObservableList<String> options = FXCollections.observableArrayList(
+                "LR(0)",
+                "SLR(1)",
+                "CLR(1)",
+                "LALR(1)"
+        );
         parser.setItems(options);
+
+        parser.setOnAction(event -> {
+            String selected = (String) parser.getValue();
+            selectedParserLabel.setText("Selected: " + selected);
+        });
     }
+
 }
