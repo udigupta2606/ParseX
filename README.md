@@ -19,6 +19,9 @@ ParseX is an interactive **Java-based LR parser simulator** that supports the fu
 ## UI Preview
 
 ![image](https://github.com/user-attachments/assets/297ab8a5-4676-4d0a-9132-754a05eb0427)
+
+![image](https://github.com/user-attachments/assets/f2be9b9f-8bd6-4bf4-8bed-dbdcda22e2bb)
+
 ![image](https://github.com/user-attachments/assets/cc98b536-f02d-4cbc-8131-c2689f309dd5)
 
 - Grammar input screen  
