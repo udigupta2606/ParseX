@@ -89,6 +89,7 @@ public class LR0Parser extends LRParser {
         }
     }
 
+    //SLR Parser
     private boolean createActionTableForSLR1() {
         actionTable = new HashMap[canonicalCollection.size()];
         for (int i = 0; i < goToTable.length; i++) {
@@ -128,6 +129,7 @@ public class LR0Parser extends LRParser {
         return true;
     }
 
+    //LR0 Parser
     private boolean createActionTableForLR0() {
         actionTable = new HashMap[canonicalCollection.size()];
         for (int i = 0; i < goToTable.length; i++) {
